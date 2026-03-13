@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devin
+      POSTGRES_PASSWORD: devinpass
+      POSTGRES_DB: devindb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devin -d devindb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://devin:devinpass@postgres:5432/devindb
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production-32chars}
+      - MAX_SESSIONS=${MAX_SESSIONS:-10}
+      - WORKSPACE_BASE=/workspaces
+      - MODEL=${MODEL:-claude-sonnet-4-5}
+      - SSH_HOST=${SSH_HOST:-}
+      - SSH_USER=${SSH_USER:-}
+      - SSH_KEY_PATH=${SSH_KEY_PATH:-}
+      - SSH_PASSWORD=${SSH_PASSWORD:-}
+    volumes:
+      - workspaces:/workspaces
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+      - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8000}
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  workspaces:

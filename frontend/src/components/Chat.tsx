@@ -62,12 +62,12 @@ function ToolCallBlock({ tc }: { tc: UiToolCall }) {
         {collapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
         {icon}
         <span className="font-semibold text-gray-300">{tc.name}</span>
-        {tc.input.command && (
+        {!!tc.input.command && (
           <span className="text-gray-500 truncate max-w-[300px]">
             {String(tc.input.command).slice(0, 80)}
           </span>
         )}
-        {tc.input.path && (
+        {!!tc.input.path && (
           <span className="text-gray-500 truncate max-w-[300px]">
             {String(tc.input.path)}
           </span>
